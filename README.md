@@ -24,7 +24,7 @@ X.509-Certificate-main/
 ├── private.pem     # RSA private key
 ├── x509_demo       # Compiled binary
 └── README.md       # Project documentation
-⚙️ Requirements
+## ⚙️ Requirements
 Linux / WSL / macOS
 
 GCC compiler
@@ -40,7 +40,7 @@ Verify Installation
 bash
 Copy code
 openssl version
-🔨 Build Instructions
+## 🔨 Build Instructions
 Using Makefile
 bash
 Copy code
@@ -54,7 +54,7 @@ Manual Build
 bash
 Copy code
 gcc main.c -o x509_demo -lssl -lcrypto
-🚀 How to Run
+##🚀 How to Run
 bash
 Copy code
 ./x509_demo
@@ -68,7 +68,7 @@ Encrypt and decrypt sample data
 
 Print results in hexadecimal format
 
-🔐 PEM File Explanation
+##🔐 PEM File Explanation
 cert.pem
 Contains an X.509 certificate
 
@@ -89,9 +89,9 @@ Decrypting data
 
 Signing data
 
-⚠️ Never expose private keys in real-world projects
+##⚠️ Never expose private keys in real-world projects
 
-🧠 OpenSSL APIs Used
+##🧠 OpenSSL APIs Used
 Some important OpenSSL functions used in this project:
 
 PEM_read_X509() – Read X.509 certificate from PEM file
@@ -106,7 +106,7 @@ RSA_private_decrypt() – Decrypt data using private key
 
 OpenSSL error handling utilities
 
-🧪 Educational Purpose
+##🧪 Educational Purpose
 This project is designed for:
 
 Learning basic cryptography concepts
