@@ -24,101 +24,129 @@ X.509-Certificate-main/
 ├── private.pem     # RSA private key
 ├── x509_demo       # Compiled binary
 └── README.md       # Project documentation
+```
+
+---
+
 ## ⚙️ Requirements
-Linux / WSL / macOS
 
-GCC compiler
+- Linux / WSL / macOS
+- GCC compiler
+- OpenSSL development library (libssl-dev)
 
-OpenSSL development library (libssl-dev)
+### Install OpenSSL (Ubuntu / Debian)
 
-Install OpenSSL (Ubuntu / Debian)
-bash
-Copy code
+```bash
 sudo apt update
 sudo apt install libssl-dev
-Verify Installation
-bash
-Copy code
+```
+
+### Verify Installation
+
+```bash
 openssl version
+```
+
+---
+
 ## 🔨 Build Instructions
-Using Makefile
-bash
-Copy code
+
+### Using Makefile
+
+```bash
 make
-After a successful build, the executable will be:
+```
 
-bash
-Copy code
+After a successful build, run the executable:
+
+```bash
 ./x509_demo
-Manual Build
-bash
-Copy code
+```
+
+### Manual Build
+
+```bash
 gcc main.c -o x509_demo -lssl -lcrypto
-##🚀 How to Run
-bash
-Copy code
+```
+
+---
+
+## 🚀 How to Run
+
+```bash
 ./x509_demo
+```
+
 The program will:
+1. Load the X.509 certificate (`cert.pem`)
+2. Extract the RSA public key
+3. Encrypt and decrypt sample data
+4. Print results in hexadecimal format
 
-Load the X.509 certificate (cert.pem)
+---
 
-Extract the RSA public key
+## 🔐 PEM File Explanation
 
-Encrypt and decrypt sample data
+### `cert.pem`
+- Contains an X.509 certificate
+- Includes the public key
+- Typically used for:
+  - Verifying digital signatures
+  - Encrypting data for the private key owner
 
-Print results in hexadecimal format
+### `private.pem`
+- Contains the RSA private key
+- Used for:
+  - Decrypting data
+  - Signing data
 
-##🔐 PEM File Explanation
-cert.pem
-Contains an X.509 certificate
+> ⚠️ **Warning:** Never expose private keys in real-world projects!
 
-Includes the public key
+---
 
-Typically used for:
+## 🧠 OpenSSL APIs Used
 
-Verifying digital signatures
-
-Encrypting data for the private key owner
-
-private.pem
-Contains the RSA private key
-
-Used for:
-
-Decrypting data
-
-Signing data
-
-##⚠️ Never expose private keys in real-world projects
-
-##🧠 OpenSSL APIs Used
 Some important OpenSSL functions used in this project:
 
-PEM_read_X509() – Read X.509 certificate from PEM file
+| Function | Description |
+|----------|-------------|
+| `PEM_read_X509()` | Read X.509 certificate from PEM file |
+| `X509_get_pubkey()` | Extract public key from certificate |
+| `EVP_PKEY_get1_RSA()` | Get RSA structure |
+| `RSA_public_encrypt()` | Encrypt data using public key |
+| `RSA_private_decrypt()` | Decrypt data using private key |
 
-X509_get_pubkey() – Extract public key from certificate
+Plus OpenSSL error handling utilities.
 
-EVP_PKEY_get1_RSA() – Get RSA structure
+---
 
-RSA_public_encrypt() – Encrypt data using public key
+## 🧪 Educational Purpose
 
-RSA_private_decrypt() – Decrypt data using private key
-
-OpenSSL error handling utilities
-
-##🧪 Educational Purpose
 This project is designed for:
+- Learning basic cryptography concepts
+- Understanding X.509 certificate handling
+- Practicing OpenSSL C APIs
+- Preparing for:
+  - TLS / SSL
+  - PKI systems
+  - Secure communication
 
-Learning basic cryptography concepts
+---
 
-Understanding X.509 certificate handling
+## 📚 Additional Resources
 
-Practicing OpenSSL C APIs
+- [OpenSSL Documentation](https://www.openssl.org/docs/)
+- [X.509 Certificate Standard](https://www.itu.int/rec/T-REC-X.509)
+- [RSA Cryptography](https://en.wikipedia.org/wiki/RSA_(cryptosystem))
 
-Preparing for:
+---
 
-TLS / SSL
+## 📝 License
 
-PKI systems
+This project is for educational purposes only. Use at your own risk.
 
-Secure communication
+---
+
+## 🤝 Contributing
+
+Feel free to open issues or submit pull requests for improvements!
