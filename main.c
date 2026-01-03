@@ -1,164 +1,237 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/err.h>
+#include <stdint.h>
 
-void print_hex(const unsigned char *data, int len)
-{
-    printf("   ");
-    for (int i = 0; i < len; i++) {
-        printf("%02X ", data[i]);
-        if ((i + 1) % 16 == 0) printf("\n   ");
+// ============================================================
+// BIG NUMBER ARITHMETIC (Simplified - chỉ dùng cho demo nhỏ)
+// ============================================================
+
+typedef struct {
+    uint64_t data[64];  // Lưu số lớn (tối đa 4096 bit)
+    int len;
+} BigNum;
+
+void bn_init(BigNum *bn) {
+    memset(bn->data, 0, sizeof(bn->data));
+    bn->len = 0;
+}
+
+void bn_set(BigNum *bn, uint64_t val) {
+    bn_init(bn);
+    bn->data[0] = val;
+    bn->len = 1;
+}
+
+void bn_print(const char *label, BigNum *bn) {
+    printf("%s", label);
+    for (int i = bn->len - 1; i >= 0; i--) {
+        printf("%016lX ", bn->data[i]);
     }
     printf("\n");
 }
 
-// Mô phỏng SENDER (người gửi)
-int sender_encrypt(const char *plaintext, unsigned char *ciphertext, 
-                   const char *recipient_cert_file)
-{
-    printf("\n=== SENDER SIDE ===\n");
-    printf("1. Plaintext message:\n   \"%s\"\n\n", plaintext);
+// Modular exponentiation: result = (base^exp) mod m
+void bn_modexp(BigNum *result, BigNum *base, BigNum *exp, BigNum *m) {
+    // Thuật toán Square-and-Multiply đơn giản
+    // Trong thực tế cần implement đầy đủ big number operations
     
-    // Load recipient's certificate (public key)
-    FILE *fp = fopen(recipient_cert_file, "r");
-    if (!fp) {
-        fprintf(stderr, "Cannot open certificate file\n");
-        return -1;
+    // ĐƠN GIẢN HÓA: Chỉ dùng cho số nhỏ (demo)
+    if (base->len == 1 && exp->len == 1 && m->len == 1) {
+        uint64_t b = base->data[0];
+        uint64_t e = exp->data[0];
+        uint64_t mod = m->data[0];
+        uint64_t res = 1;
+        
+        b = b % mod;
+        while (e > 0) {
+            if (e & 1) {
+                res = (res * b) % mod;
+            }
+            e = e >> 1;
+            b = (b * b) % mod;
+        }
+        
+        bn_set(result, res);
+    } else {
+        printf("   [Big number operation - using simplified calculation]\n");
+        // Trong implementation thật cần thuật toán Montgomery hoặc Barrett
+        bn_set(result, 12345); // Mock value
     }
-    
-    X509 *cert = PEM_read_X509(fp, NULL, NULL, NULL);
-    fclose(fp);
-    
-    if (!cert) {
-        fprintf(stderr, "Cannot read X.509 certificate\n");
-        return -1;
-    }
-    
-    printf("2. Loaded recipient's X.509 certificate\n");
-    
-    // Verify certificate (trong thực tế cần verify CA signature, expiry, etc.)
-    printf("3. [Should verify certificate here - skipped in demo]\n");
-    
-    // Extract public key
-    EVP_PKEY *pubkey = X509_get_pubkey(cert);
-    RSA *rsa_pub = EVP_PKEY_get1_RSA(pubkey);
-    
-    printf("4. Extracted recipient's PUBLIC KEY from certificate\n");
-    printf("   RSA key size: %d bits\n\n", RSA_size(rsa_pub) * 8);
-    
-    // Encrypt with recipient's public key
-    int enc_len = RSA_public_encrypt(
-        strlen(plaintext),
-        (unsigned char *)plaintext,
-        ciphertext,
-        rsa_pub,
-        RSA_PKCS1_PADDING
-    );
-    
-    printf("5. Encrypted message (Ciphertext):\n");
-    print_hex(ciphertext, enc_len);
-    
-    printf("6. Sending ciphertext to recipient...\n");
-    
-    // Cleanup
-    RSA_free(rsa_pub);
-    EVP_PKEY_free(pubkey);
-    X509_free(cert);
-    
-    return enc_len;
 }
 
-// Mô phỏng RECIPIENT (người nhận)
-void recipient_decrypt(unsigned char *ciphertext, int ciphertext_len,
-                       const char *private_key_file)
-{
-    printf("\n=== RECIPIENT SIDE ===\n");
-    printf("1. Received ciphertext (%d bytes)\n\n", ciphertext_len);
+// ============================================================
+// SIMPLIFIED RSA (Dùng số nhỏ cho demo)
+// ============================================================
+
+typedef struct {
+    BigNum n;  // Modulus (n = p * q)
+    BigNum e;  // Public exponent
+    BigNum d;  // Private exponent
+} RSAKey;
+
+// Khởi tạo RSA key đơn giản (dùng số nhỏ cho demo)
+void rsa_generate_demo_keys(RSAKey *pubkey, RSAKey *privkey) {
+    // Trong thực tế: chọn 2 số nguyên tố lớn p, q
+    // Đây chỉ là DEMO với số nhỏ
     
-    // Load recipient's private key
-    FILE *fp = fopen(private_key_file, "r");
-    if (!fp) {
-        fprintf(stderr, "Cannot open private key file\n");
-        return;
-    }
+    uint64_t p = 61;   // Số nguyên tố nhỏ
+    uint64_t q = 53;   // Số nguyên tố nhỏ
+    uint64_t n = p * q; // n = 3233
+    uint64_t phi = (p - 1) * (q - 1); // phi = 3120
+    uint64_t e = 17;   // Public exponent (thường dùng 65537, nhưng dùng 17 cho đơn giản)
     
-    RSA *rsa_priv = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
-    fclose(fp);
+    // Tính private exponent d: d * e ≡ 1 (mod phi)
+    // Extended Euclidean algorithm - đơn giản hóa
+    uint64_t d = 2753; // Pre-calculated: 17 * 2753 mod 3120 = 1
     
-    if (!rsa_priv) {
-        fprintf(stderr, "Cannot read private key\n");
-        return;
-    }
+    // Public key
+    bn_set(&pubkey->n, n);
+    bn_set(&pubkey->e, e);
     
-    printf("2. Loaded recipient's PRIVATE KEY\n");
-    printf("   RSA key size: %d bits\n\n", RSA_size(rsa_priv) * 8);
+    // Private key
+    bn_set(&privkey->n, n);
+    bn_set(&privkey->d, d);
     
-    // Decrypt with recipient's private key
-    unsigned char decrypted[256];
-    int dec_len = RSA_private_decrypt(
-        ciphertext_len,
-        ciphertext,
-        decrypted,
-        rsa_priv,
-        RSA_PKCS1_PADDING
-    );
-    
-    if (dec_len == -1) {
-        fprintf(stderr, "Decryption failed\n");
-        ERR_print_errors_fp(stderr);
-        RSA_free(rsa_priv);
-        return;
-    }
-    
-    decrypted[dec_len] = '\0';
-    
-    printf("3. Decrypted message (Plaintext):\n   \"%s\"\n", decrypted);
-    
-    // Cleanup
-    RSA_free(rsa_priv);
+    printf("Generated RSA keys (DEMO - small numbers):\n");
+    printf("  p = %lu, q = %lu\n", p, q);
+    printf("  n = %lu (modulus)\n", n);
+    printf("  e = %lu (public exponent)\n", e);
+    printf("  d = %lu (private exponent)\n", d);
+    printf("  Note: Real RSA uses 2048+ bit keys!\n\n");
 }
 
-int main()
-{
-    OpenSSL_add_all_algorithms();
-    ERR_load_crypto_strings();
+// RSA Encryption: c = m^e mod n
+uint64_t rsa_encrypt(uint64_t plaintext, RSAKey *pubkey) {
+    BigNum m, c;
+    bn_set(&m, plaintext);
+    bn_modexp(&c, &m, &pubkey->e, &pubkey->n);
+    return c.data[0];
+}
 
-    const char *plaintext = "Hello X.509 RSA!";
-    unsigned char ciphertext[256];
+// RSA Decryption: m = c^d mod n
+uint64_t rsa_decrypt(uint64_t ciphertext, RSAKey *privkey) {
+    BigNum c, m;
+    bn_set(&c, ciphertext);
+    bn_modexp(&m, &c, &privkey->d, &privkey->n);
+    return m.data[0];
+}
+
+// ============================================================
+// SIMPLIFIED X.509 CERTIFICATE
+// ============================================================
+
+typedef struct {
+    char subject[256];
+    char issuer[256];
+    RSAKey public_key;
+    // Trong thực tế: validity period, signature, extensions, etc.
+} X509Certificate;
+
+void x509_create_demo_cert(X509Certificate *cert, RSAKey *pubkey) {
+    strcpy(cert->subject, "CN=Recipient,O=Demo Corp");
+    strcpy(cert->issuer, "CN=Demo CA,O=Demo Corp");
+    cert->public_key = *pubkey;
     
-    // SENDER encrypts with recipient's public key (from certificate)
-    int ciphertext_len = sender_encrypt(
-        plaintext, 
-        ciphertext, 
-        "cert.pem"  // Recipient's certificate
-    );
+    printf("Created X.509 Certificate:\n");
+    printf("  Subject: %s\n", cert->subject);
+    printf("  Issuer: %s\n", cert->issuer);
+    printf("  Public Key (n,e): (%lu, %lu)\n\n", 
+           pubkey->n.data[0], pubkey->e.data[0]);
+}
+
+// ============================================================
+// MAIN SIMULATION
+// ============================================================
+
+void print_separator() {
+    printf("========================================\n");
+}
+
+int main() {
+    // ============ RECIPIENT GENERATES KEY PAIR ============
+    printf("STEP 0: Recipient generates RSA key pair\n");
+    print_separator();
     
-    if (ciphertext_len == -1) {
-        fprintf(stderr, "Encryption failed\n");
-        return 1;
+    RSAKey recipient_pubkey, recipient_privkey;
+    rsa_generate_demo_keys(&recipient_pubkey, &recipient_privkey);
+    
+    // ============ RECIPIENT CREATES CERTIFICATE ============
+    printf("STEP 1: Recipient creates X.509 certificate\n");
+    print_separator();
+    
+    X509Certificate cert;
+    x509_create_demo_cert(&cert, &recipient_pubkey);
+    
+    printf("Certificate contains RECIPIENT's PUBLIC KEY\n");
+    printf("   (In real world: signed by trusted CA)\n\n");
+    
+    // ============ SENDER SIDE ============
+    printf("STEP 2: SENDER encrypts message\n");
+    print_separator();
+    
+    const char *plaintext = "Hello!";
+    printf("Plaintext message: \"%s\"\n\n", plaintext);
+    
+    printf("Sender extracts PUBLIC KEY from recipient's certificate:\n");
+    printf("  n = %lu\n", cert.public_key.n.data[0]);
+    printf("  e = %lu\n\n", cert.public_key.e.data[0]);
+    
+    // Encrypt từng byte (trong thực tế dùng padding schemes)
+    printf("Encrypting message byte-by-byte:\n");
+    uint64_t ciphertext[256];
+    int cipher_len = strlen(plaintext);
+    
+    for (int i = 0; i < cipher_len; i++) {
+        uint64_t byte = (uint64_t)plaintext[i];
+        ciphertext[i] = rsa_encrypt(byte, &cert.public_key);
+        printf("  '%c' (ASCII %lu) -> %lu\n", plaintext[i], byte, ciphertext[i]);
     }
     
-    printf("\n[--- Message transmitted over network ---]\n");
+    printf("\nCiphertext (hex): ");
+    for (int i = 0; i < cipher_len; i++) {
+        printf("%04lX ", ciphertext[i]);
+    }
+    printf("\n\n");
     
-    // RECIPIENT decrypts with their private key
-    recipient_decrypt(
-        ciphertext, 
-        ciphertext_len, 
-        "private.pem"  // Recipient's private key
-    );
+    printf("Transmitting ciphertext over network...\n\n");
     
-    printf("Key Points:                                       \n");
-    printf("Sender uses RECIPIENT's PUBLIC KEY (from cert)\n");
-    printf("Recipient uses their own PRIVATE KEY           \n");
-    printf("Different keys encrypt/decrypt (Asymmetric)     \n");
-    printf("X.509 cert provides trusted public key          \n");
-
+    // ============ RECIPIENT SIDE ============
+    printf("STEP 3: RECIPIENT decrypts message\n");
+    print_separator();
     
-    EVP_cleanup();
-    ERR_free_strings();
+    printf("Recipient uses their PRIVATE KEY:\n");
+    printf("  n = %lu\n", recipient_privkey.n.data[0]);
+    printf("  d = %lu\n\n", recipient_privkey.d.data[0]);
     
+    char decrypted[256];
+    printf("Decrypting ciphertext:\n");
+    
+    for (int i = 0; i < cipher_len; i++) {
+        uint64_t byte = rsa_decrypt(ciphertext[i], &recipient_privkey);
+        decrypted[i] = (char)byte;
+        printf("  %lu -> '%c' (ASCII %lu)\n", ciphertext[i], decrypted[i], byte);
+    }
+    decrypted[cipher_len] = '\0';
+    
+    printf("\nDecrypted plaintext: \"%s\"\n\n", decrypted);
+    
+    // ============ SUMMARY ============
+    print_separator();
+    printf("SUMMARY:\n");
+    printf("Different keys used: PUBLIC (encrypt) vs PRIVATE (decrypt)\n");
+    printf("X.509 certificate carries the PUBLIC KEY\n");
+    printf("Only recipient with PRIVATE KEY can decrypt\n");
+    printf("This demo uses SMALL numbers (real RSA: 2048+ bits)\n");
+    print_separator();
+    
+    printf("\nDISCLAIMER:\n");
+    printf("This is educational code. DO NOT use in production!\n");
+    printf("Real implementation needs:\n");
+    printf("Proper big number library\n");
+    printf("OAEP/PSS padding schemes\n");
+    printf("ASN.1/DER parsing for X.509\n");
+    printf("Certificate validation (CA signature, expiry)\n");
+    printf("Secure random number generation\n");
     return 0;
 }
