@@ -3,10 +3,6 @@
 #include <string.h>
 #include <stdint.h>
 
-// ============================================================
-// BIG NUMBER ARITHMETIC (Simplified - chỉ dùng cho demo nhỏ)
-// ============================================================
-
 typedef struct {
     uint64_t data[64];  // Lưu số lớn (tối đa 4096 bit)
     int len;
@@ -34,9 +30,7 @@ void bn_print(const char *label, BigNum *bn) {
 // Modular exponentiation: result = (base^exp) mod m
 void bn_modexp(BigNum *result, BigNum *base, BigNum *exp, BigNum *m) {
     // Thuật toán Square-and-Multiply đơn giản
-    // Trong thực tế cần implement đầy đủ big number operations
-    
-    // ĐƠN GIẢN HÓA: Chỉ dùng cho số nhỏ (demo)
+
     if (base->len == 1 && exp->len == 1 && m->len == 1) {
         uint64_t b = base->data[0];
         uint64_t e = exp->data[0];
@@ -60,10 +54,6 @@ void bn_modexp(BigNum *result, BigNum *base, BigNum *exp, BigNum *m) {
     }
 }
 
-// ============================================================
-// SIMPLIFIED RSA (Dùng số nhỏ cho demo)
-// ============================================================
-
 typedef struct {
     BigNum n;  // Modulus (n = p * q)
     BigNum e;  // Public exponent
@@ -72,17 +62,14 @@ typedef struct {
 
 // Khởi tạo RSA key đơn giản (dùng số nhỏ cho demo)
 void rsa_generate_demo_keys(RSAKey *pubkey, RSAKey *privkey) {
-    // Trong thực tế: chọn 2 số nguyên tố lớn p, q
-    // Đây chỉ là DEMO với số nhỏ
     
     uint64_t p = 61;   // Số nguyên tố nhỏ
     uint64_t q = 53;   // Số nguyên tố nhỏ
     uint64_t n = p * q; // n = 3233
     uint64_t phi = (p - 1) * (q - 1); // phi = 3120
-    uint64_t e = 17;   // Public exponent (thường dùng 65537, nhưng dùng 17 cho đơn giản)
+    uint64_t e = 17;   // Public exponent 
     
     // Tính private exponent d: d * e ≡ 1 (mod phi)
-    // Extended Euclidean algorithm - đơn giản hóa
     uint64_t d = 2753; // Pre-calculated: 17 * 2753 mod 3120 = 1
     
     // Public key
@@ -117,15 +104,10 @@ uint64_t rsa_decrypt(uint64_t ciphertext, RSAKey *privkey) {
     return m.data[0];
 }
 
-// ============================================================
-// SIMPLIFIED X.509 CERTIFICATE
-// ============================================================
-
 typedef struct {
     char subject[256];
     char issuer[256];
     RSAKey public_key;
-    // Trong thực tế: validity period, signature, extensions, etc.
 } X509Certificate;
 
 void x509_create_demo_cert(X509Certificate *cert, RSAKey *pubkey) {
@@ -140,10 +122,6 @@ void x509_create_demo_cert(X509Certificate *cert, RSAKey *pubkey) {
            pubkey->n.data[0], pubkey->e.data[0]);
 }
 
-// ============================================================
-// MAIN SIMULATION
-// ============================================================
-
 void print_separator() {
     printf("========================================\n");
 }
@@ -151,8 +129,6 @@ void print_separator() {
 int main() {
     // ============ RECIPIENT GENERATES KEY PAIR ============
     printf("STEP 0: Recipient generates RSA key pair\n");
-    print_separator();
-    
     RSAKey recipient_pubkey, recipient_privkey;
     rsa_generate_demo_keys(&recipient_pubkey, &recipient_privkey);
     
@@ -216,22 +192,5 @@ int main() {
     
     printf("\nDecrypted plaintext: \"%s\"\n\n", decrypted);
     
-    // ============ SUMMARY ============
-    print_separator();
-    printf("SUMMARY:\n");
-    printf("Different keys used: PUBLIC (encrypt) vs PRIVATE (decrypt)\n");
-    printf("X.509 certificate carries the PUBLIC KEY\n");
-    printf("Only recipient with PRIVATE KEY can decrypt\n");
-    printf("This demo uses SMALL numbers (real RSA: 2048+ bits)\n");
-    print_separator();
-    
-    printf("\nDISCLAIMER:\n");
-    printf("This is educational code. DO NOT use in production!\n");
-    printf("Real implementation needs:\n");
-    printf("Proper big number library\n");
-    printf("OAEP/PSS padding schemes\n");
-    printf("ASN.1/DER parsing for X.509\n");
-    printf("Certificate validation (CA signature, expiry)\n");
-    printf("Secure random number generation\n");
     return 0;
 }

@@ -3,7 +3,7 @@
 ## 📌 Overview
 
 This project is a **pure C implementation** of RSA encryption and X.509 certificate simulation **without using any external cryptography libraries** (no OpenSSL, no mbedTLS).
-
+link slide: https://www.canva.com/design/DAG73ulnjUs/4g9jLjhAtrmtqn2CKgx9Ig/edit?fbclid=IwY2xjawPWlplleHRuA2FlbQIxMABicmlkETFQV3hHNjIyV2VxbUxObngyc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHqLfiEpgcSHwhynx471mN5ZQE3-8f-T4H4S0ClhmM2a2Zg6xWJ0zE8AQgbWn_aem_hHspp4VrCeDqqf0RsAz16g
 Everything is implemented from scratch to demonstrate:
 - **RSA encryption/decryption algorithm** (mathematical implementation)
 - **Big number arithmetic** (for handling large integers)
@@ -63,8 +63,8 @@ After studying this project, you will understand:
 
 ```text
 X.509-Pure-C/
-├── x509_pure_c.c           # Main implementation (Sender/Recipient simulation)
-├── x509_security_test.c    # Security robustness tests
+├── main.c           # Main implementation (Sender/Recipient simulation)
+├── tests.c    # Security robustness tests
 ├── MakeFile                # Build script
 └── README.md               # This file
 ```
@@ -73,8 +73,8 @@ X.509-Pure-C/
 
 | File | Lines | Description |
 |------|-------|-------------|
-| `x509_pure_c.c` | ~350 | Complete RSA + X.509 implementation with demo |
-| `x509_security_test.c` | ~450 | Security tests (tampering, wrong key, size limits) |
+| `main.c` | ~350 | Complete RSA + X.509 implementation with demo |
+| `tests.c` | ~450 | Security tests (tampering, wrong key, size limits) |
 
 ---
 
@@ -105,27 +105,27 @@ make all
 ```
 
 This creates two executables:
-- `x509_pure_demo` - Main implementation demo
-- `x509_security_test` - Security tests
+- `main` - Main implementation demo
+- `tests` - Security tests
 
 ### Build Individual Programs
 
 ```bash
 # Main demo
-make x509_pure_demo
+make main
 
 # Security tests  
-make x509_security_test
+make tests
 ```
 
 ### Manual Build
 
 ```bash
 # Main implementation
-gcc x509_pure_c.c -o x509_pure_demo -lm
+gcc main.c -o x509_pure_demo -lm
 
 # Security tests
-gcc x509_security_test.c -o x509_security_test -lm
+gcc tests.c -o tests -lm
 ```
 
 ### Clean Build
@@ -202,7 +202,7 @@ Decrypting ciphertext:
 ### 2. Security Tests
 
 ```bash
-./x509_security_test
+./tests
 ```
 
 **Tests Performed:**
